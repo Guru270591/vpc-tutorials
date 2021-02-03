@@ -128,6 +128,20 @@ resource "ibm_is_security_group_rule" "frontend_ingress_80_all" {
   }
 }
 
+resource "ibm_is_security_group_rule" "frontend_all" {
+  group     = ibm_is_security_group.frontend.id
+  direction = "inbound"
+
+  remote    = "0.0.0.0/0"
+}
+
+resource "ibm_is_security_group_rule" "frontend_outbound_all" {
+  group     = ibm_is_security_group.frontend.id
+  direction = "outbound"
+
+  remote    = "0.0.0.0/0"
+}
+
 resource "ibm_is_subnet" "frontend2" {
   name                     = "${var.basename}-frontend2-subnet"
   vpc                      = ibm_is_vpc.vpc.id
@@ -151,6 +165,20 @@ resource "ibm_is_security_group_rule" "frontend2_ingress_80_all" {
     port_min = 80
     port_max = 80
   }
+}
+
+resource "ibm_is_security_group_rule" "frontend2_all" {
+  group     = ibm_is_security_group.frontend2.id
+  direction = "inbound"
+
+  remote    = "0.0.0.0/0"
+}
+
+resource "ibm_is_security_group_rule" "frontend2_outbound_all" {
+  group     = ibm_is_security_group.frontend2.id
+  direction = "outbound"
+
+  remote    = "0.0.0.0/0"
 }
 
 # resource "ibm_is_security_group_rule" "frontend_egress_tcp_port_backend" {

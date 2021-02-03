@@ -1,5 +1,0 @@
-basename = ""
-ssh_keyname = ""
-vpc_name = ""
-ibmcloud_api_key = ""
-resource_group_name = ""

@@ -1,6 +1,4 @@
 # see export.template for these:
-variable "ibmcloud_api_key" {
-}
 
 variable "ssh_key_name" {
 }
@@ -17,7 +15,7 @@ variable "prefix" {
 
 # if this is empty use the basename for the vpc name.  If not empty then use this for the vpc_name
 variable "vpc_name" {
-  default = ""
+  default = "my-vpc"
 }
 
 # These variables are well documented in the ../tfmodule/variable.tf file.
@@ -29,16 +27,12 @@ variable "zone" {
   default = "us-south-1"
 }
 
-variable "backend_pgw" {
-  default = false
-}
-
 variable "profile" {
   default = "cx2-2x4"
 }
 
 variable "image_name" {
-  default = "ibm-ubuntu-18-04-1-minimal-amd64-2"
+  default = "ibm-centos-7-6-minimal-amd64-2"
 }
 
 variable "maintenance" {
@@ -47,5 +41,6 @@ variable "maintenance" {
 
 ##
 variable "resource_group_name" {
+  default = "Default"
 }
 
