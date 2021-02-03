@@ -45,8 +45,8 @@ variable "ibm_is_image_id" {
 }
 
 # set to true if the backend should have a public gateway.  This is used to provision software.
-variable "backend_pgw" {
-}
+# variable "backend_pgw" {
+# }
 
 # when true, both the frontend and backend instances will add the bastion maintenance security group
 # to their security group list, allowing ssh access from the bastion
@@ -57,14 +57,14 @@ variable "maintenance" {
 variable "frontend_user_data" {
 }
 
-variable "backend_user_data" {
-}
+# variable "backend_user_data" {
+# }
 
 # the backend security group allows ingress from the frontend for this port
 # The frontend security group allows egress to the backend for this port
-variable "backend_tcp_port" {
-  default = 80
-}
+# variable "backend_tcp_port" {
+#   default = 80
+# }
 
 variable "resource_group_name" {
 }

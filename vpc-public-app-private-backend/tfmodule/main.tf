@@ -7,21 +7,21 @@ resource "ibm_is_vpc" "vpc" {
   resource_group = data.ibm_resource_group.all_rg.id
 }
 
-resource "ibm_is_public_gateway" "backend" {
-  count = var.backend_pgw ? 1 : 0
-  vpc   = ibm_is_vpc.vpc.id
-  name  = "${var.basename}-${var.zone}-pubgw"
-  zone  = var.zone
-}
+# resource "ibm_is_public_gateway" "backend" {
+#   count = var.backend_pgw ? 1 : 0
+#   vpc   = ibm_is_vpc.vpc.id
+#   name  = "${var.basename}-${var.zone}-pubgw"
+#   zone  = var.zone
+# }
 
-resource "ibm_is_subnet" "backend" {
-  name                     = "${var.basename}-backend-subnet"
-  vpc                      = ibm_is_vpc.vpc.id
-  zone                     = var.zone
-  public_gateway           = join("", ibm_is_public_gateway.backend.*.id)
-  total_ipv4_address_count = 256
-  resource_group           = data.ibm_resource_group.all_rg.id
-}
+# resource "ibm_is_subnet" "backend" {
+#   name                     = "${var.basename}-backend-subnet"
+#   vpc                      = ibm_is_vpc.vpc.id
+#   zone                     = var.zone
+#   public_gateway           = join("", ibm_is_public_gateway.backend.*.id)
+#   total_ipv4_address_count = 256
+#   resource_group           = data.ibm_resource_group.all_rg.id
+# }
 
 # bastion subnet and instance values needed by the bastion module
 resource "ibm_is_subnet" "bastion" {
@@ -128,33 +128,58 @@ resource "ibm_is_security_group_rule" "frontend_ingress_80_all" {
   }
 }
 
-resource "ibm_is_security_group_rule" "frontend_egress_tcp_port_backend" {
-  group     = ibm_is_security_group.frontend.id
-  direction = "outbound"
-  remote    = ibm_is_security_group.backend.id
-
-  tcp {
-    port_min = var.backend_tcp_port
-    port_max = var.backend_tcp_port
-  }
+resource "ibm_is_subnet" "frontend2" {
+  name                     = "${var.basename}-frontend2-subnet"
+  vpc                      = ibm_is_vpc.vpc.id
+  zone                     = var.zone
+  total_ipv4_address_count = 256
+  resource_group           = data.ibm_resource_group.all_rg.id
 }
 
-resource "ibm_is_security_group" "backend" {
-  name           = "${var.basename}-backend-sg"
+resource "ibm_is_security_group" "frontend2" {
+  name           = "${var.basename}-frontend2-sg"
   vpc            = ibm_is_vpc.vpc.id
   resource_group = data.ibm_resource_group.all_rg.id
 }
 
-resource "ibm_is_security_group_rule" "backend_ingress_tcp_port_frontend" {
-  group     = ibm_is_security_group.backend.id
+resource "ibm_is_security_group_rule" "frontend2_ingress_80_all" {
+  group     = ibm_is_security_group.frontend2.id
   direction = "inbound"
-  remote    = ibm_is_security_group.frontend.id
+  remote    = local.frontend_ingress_cidr
 
   tcp {
-    port_min = var.backend_tcp_port
-    port_max = var.backend_tcp_port
+    port_min = 80
+    port_max = 80
   }
 }
+
+# resource "ibm_is_security_group_rule" "frontend_egress_tcp_port_backend" {
+#   group     = ibm_is_security_group.frontend.id
+#   direction = "outbound"
+#   remote    = ibm_is_security_group.backend.id
+
+#   tcp {
+#     port_min = var.backend_tcp_port
+#     port_max = var.backend_tcp_port
+#   }
+# }
+
+# resource "ibm_is_security_group" "backend" {
+#   name           = "${var.basename}-backend-sg"
+#   vpc            = ibm_is_vpc.vpc.id
+#   resource_group = data.ibm_resource_group.all_rg.id
+# }
+
+# resource "ibm_is_security_group_rule" "backend_ingress_tcp_port_frontend" {
+#   group     = ibm_is_security_group.backend.id
+#   direction = "inbound"
+#   remote    = ibm_is_security_group.frontend.id
+
+#   tcp {
+#     port_min = var.backend_tcp_port
+#     port_max = var.backend_tcp_port
+#   }
+# }
 
 #Frontend
 locals {
@@ -199,31 +224,32 @@ resource "ibm_is_floating_ip" "frontend" {
   resource_group = data.ibm_resource_group.all_rg.id
 }
 
-#Backend
+
+#frontend2
 locals {
-  # create either [backend] or [backend, maintenance] depending on the var.maintenance boolean
-  backend_security_groups = split(
+  # create either [frontend] or [frontend, maintenance] depending on the var.maintenance boolean
+  frontend2_security_groups = split(
     ",",
     var.maintenance ? format(
       "%s,%s",
-      ibm_is_security_group.backend.id,
+      ibm_is_security_group.frontend2.id,
       module.bastion.security_group_id,
-    ) : ibm_is_security_group.frontend.id,
+    ) : ibm_is_security_group.frontend2.id,
   )
 }
 
-resource "ibm_is_instance" "backend" {
-  name           = "${var.basename}-backend-vsi"
+resource "ibm_is_instance" "frontend2" {
+  name           = "${var.basename}-frontend2-vsi"
   image          = var.ibm_is_image_id
   profile        = var.profile
   vpc            = ibm_is_vpc.vpc.id
   zone           = var.zone
   keys           = [data.ibm_is_ssh_key.sshkey.id]
-  user_data      = var.backend_user_data
+  user_data      = var.frontend_user_data
   resource_group = data.ibm_resource_group.all_rg.id
 
   primary_network_interface {
-    subnet = ibm_is_subnet.backend.id
+    subnet = ibm_is_subnet.frontend2.id
     # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
     # force an interpolation expression to be interpreted as a list by wrapping it
     # in an extra set of list brackets. That form was supported for compatibility in
@@ -232,7 +258,50 @@ resource "ibm_is_instance" "backend" {
     # If the expression in the following list itself returns a list, remove the
     # brackets to avoid interpretation as a list of lists. If the expression
     # returns a single list item then leave it as-is and remove this TODO comment.
-    security_groups = flatten([local.backend_security_groups])
+    security_groups = flatten([local.frontend2_security_groups])
   }
 }
+
+resource "ibm_is_floating_ip" "frontend2" {
+  name           = "${var.basename}-frontend2-ip"
+  target         = ibm_is_instance.frontend2.primary_network_interface[0].id
+  resource_group = data.ibm_resource_group.all_rg.id
+}
+
+#Backend
+# locals {
+#   # create either [backend] or [backend, maintenance] depending on the var.maintenance boolean
+#   backend_security_groups = split(
+#     ",",
+#     var.maintenance ? format(
+#       "%s,%s",
+#       ibm_is_security_group.backend.id,
+#       module.bastion.security_group_id,
+#     ) : ibm_is_security_group.frontend.id,
+#   )
+# }
+
+# resource "ibm_is_instance" "backend" {
+#   name           = "${var.basename}-backend-vsi"
+#   image          = var.ibm_is_image_id
+#   profile        = var.profile
+#   vpc            = ibm_is_vpc.vpc.id
+#   zone           = var.zone
+#   keys           = [data.ibm_is_ssh_key.sshkey.id]
+#   user_data      = var.backend_user_data
+#   resource_group = data.ibm_resource_group.all_rg.id
+
+#   primary_network_interface {
+#     subnet = ibm_is_subnet.backend.id
+#     # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
+#     # force an interpolation expression to be interpreted as a list by wrapping it
+#     # in an extra set of list brackets. That form was supported for compatibility in
+#     # v0.11, but is no longer supported in Terraform v0.12.
+#     #
+#     # If the expression in the following list itself returns a list, remove the
+#     # brackets to avoid interpretation as a list of lists. If the expression
+#     # returns a single list item then leave it as-is and remove this TODO comment.
+#     security_groups = flatten([local.backend_security_groups])
+#   }
+# }
 

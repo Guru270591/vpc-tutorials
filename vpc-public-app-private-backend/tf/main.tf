@@ -16,15 +16,6 @@ echo "I am the frontend server" > /var/www/html/index.html
 service nginx start
 EOF
 
-
-  user_data_backend = <<EOF
-#!/bin/bash
-apt-get update
-apt-get install -y nginx
-echo "I am the backend server" > /var/www/html/index.html
-service nginx start
-EOF
-
 }
 
 data "ibm_is_image" "os" {
@@ -38,12 +29,12 @@ module "vpc_pub_priv" {
   resource_group_name = var.resource_group_name
   ssh_key_name        = var.ssh_key_name
   zone                = var.zone
-  backend_pgw         = var.backend_pgw
+  # backend_pgw         = var.backend_pgw
   profile             = var.profile
   ibm_is_image_id     = data.ibm_is_image.os.id
   maintenance         = var.maintenance
   frontend_user_data  = local.user_data_frontend
-  backend_user_data   = local.user_data_backend
+  # backend_user_data   = local.user_data_backend
 }
 
 locals {
@@ -70,15 +61,14 @@ output "FRONT_NIC_IP" {
   value = module.vpc_pub_priv.frontend_network_interface_address
 }
 
-output "sshbackend" {
-  value = "ssh -o ProxyJump=root@${local.bastion_ip} root@${module.vpc_pub_priv.backend_network_interface_address}"
+output "sshfrontend2" {
+  value = "ssh -o ProxyJump=root@${local.bastion_ip} root@${module.vpc_pub_priv.frontend2_network_interface_address}"
 }
 
-output "BACK_IP_ADDRESS" {
-  value = module.vpc_pub_priv.backend_floating_ip_address
+output "FRONT2_IP_ADDRESS" {
+  value = module.vpc_pub_priv.frontend2_floating_ip_address
 }
 
-output "BACK_NIC_IP" {
-  value = module.vpc_pub_priv.backend_network_interface_address
+output "FRONT2_NIC_IP" {
+  value = module.vpc_pub_priv.frontend2_network_interface_address
 }
-
