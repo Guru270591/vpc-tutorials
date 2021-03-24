@@ -246,11 +246,6 @@ resource "ibm_is_instance" "frontend" {
   }
 }
 
-resource "ibm_is_floating_ip" "frontend" {
-  name           = "${var.basename}-frontend-ip"
-  target         = ibm_is_instance.frontend.primary_network_interface[0].id
-  resource_group = data.ibm_resource_group.all_rg.id
-}
 
 
 #frontend2
@@ -290,11 +285,7 @@ resource "ibm_is_instance" "frontend2" {
   }
 }
 
-resource "ibm_is_floating_ip" "frontend2" {
-  name           = "${var.basename}-frontend2-ip"
-  target         = ibm_is_instance.frontend2.primary_network_interface[0].id
-  resource_group = data.ibm_resource_group.all_rg.id
-}
+
 
 #Backend
 # locals {
