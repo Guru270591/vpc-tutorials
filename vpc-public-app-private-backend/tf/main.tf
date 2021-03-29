@@ -53,9 +53,6 @@ output "sshfrontend" {
   value = "ssh -o ProxyJump=root@${local.bastion_ip} root@${module.vpc_pub_priv.frontend_network_interface_address}"
 }
 
-output "FRONT_IP_ADDRESS" {
-  value = module.vpc_pub_priv.frontend_floating_ip_address
-}
 
 output "FRONT_NIC_IP" {
   value = module.vpc_pub_priv.frontend_network_interface_address
@@ -65,9 +62,6 @@ output "sshfrontend2" {
   value = "ssh -o ProxyJump=root@${local.bastion_ip} root@${module.vpc_pub_priv.frontend2_network_interface_address}"
 }
 
-output "FRONT2_IP_ADDRESS" {
-  value = module.vpc_pub_priv.frontend2_floating_ip_address
-}
 
 output "FRONT2_NIC_IP" {
   value = module.vpc_pub_priv.frontend2_network_interface_address
