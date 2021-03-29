@@ -6,9 +6,9 @@ output "frontend_network_interface_address" {
   value = ibm_is_instance.frontend.primary_network_interface[0].primary_ipv4_address
 }
 
-output "frontend_floating_ip_address" {
-  value = ibm_is_floating_ip.frontend.address
-}
+# output "frontend_floating_ip_address" {
+#   value = ibm_is_floating_ip.frontend.address
+# }
 
 # output "backend_network_interface_address" {
 #   value = ibm_is_instance.backend.primary_network_interface[0].primary_ipv4_address
@@ -22,6 +22,6 @@ output "frontend2_network_interface_address" {
   value = ibm_is_instance.frontend2.primary_network_interface[0].primary_ipv4_address
 }
 
-output "frontend2_floating_ip_address" {
-  value = ibm_is_floating_ip.frontend2.address
-}
+# output "frontend2_floating_ip_address" {
+#   value = ibm_is_floating_ip.frontend2.address
+# }
